@@ -29,6 +29,12 @@ class OrderManager {
         this.loadOrders();
         this.updateDateTime();
         setInterval(() => this.updateDateTime(), 1000);
+        
+        console.log('OrderManager initialized');
+        this.form.addEventListener('submit', (e) => {
+            console.log('Form submitted');
+            this.handleSubmit(e);
+        });
     }
 
     updateDateTime() {
@@ -72,33 +78,36 @@ class OrderManager {
         e.preventDefault();
         
         try {
-            const order = {
-                customerName: document.getElementById('customerName').value,
-                customerPhone: document.getElementById('customerPhone').value,
-                customerAddress: document.getElementById('customerAddress').value,
-                crabType: document.getElementById('crabType').value,
-                quantity: parseFloat(document.getElementById('quantity').value),
-                price: parseFloat(document.getElementById('price').value),
-                total: parseFloat(document.getElementById('quantity').value) * parseFloat(document.getElementById('price').value),
-                deliveryDate: new Date(document.getElementById('deliveryDate').value),
-                orderDate: new Date()
-            };
+            // Create order object from form data
+            const order = new Order(
+                document.getElementById('customerName').value,
+                document.getElementById('customerPhone').value,
+                document.getElementById('customerAddress').value,
+                document.getElementById('crabType').value,
+                parseFloat(document.getElementById('quantity').value),
+                parseFloat(document.getElementById('price').value),
+                document.getElementById('deliveryDate').value
+            );
             
             // Save to Google Sheets first
             await this.saveToGoogleSheets(order);
             
-            // If successful, save locally
+            // Add to local list and display
             this.addOrder(order);
             this.saveOrders();
+            
+            // Reset form and show success message
             this.form.reset();
             this.showToast('Order added successfully');
+            
         } catch (error) {
             console.error('Error saving order:', error);
-            this.showToast('Failed to save order', 'error');
+            this.showToast('Failed to save order: ' + error.message, 'error');
         }
     }
 
     async saveToGoogleSheets(order) {
+        console.log('Saving to Google Sheets:', order);
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.SHEET_ID}/values/${this.SHEET_NAME}!A:J:append?valueInputOption=RAW&key=${this.API_KEY}`;
         
         const row = [
@@ -138,6 +147,7 @@ class OrderManager {
     }
 
     addOrder(order) {
+        console.log('Adding order:', order);
         this.orders.push(order);
         this.displayOrder(order);
     }
