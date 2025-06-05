@@ -126,8 +126,10 @@ class OrderManager {
         try {
             const response = await fetch(url, {
                 method: 'POST',
+                mode: 'cors', // Add CORS mode
                 headers: {
                     'Content-Type': 'application/json',
+                    'Origin': window.location.origin // Add origin header
                 },
                 body: JSON.stringify({
                     values: [row]
@@ -135,14 +137,22 @@ class OrderManager {
             });
 
             if (!response.ok) {
+                // Handle specific error cases
+                if (response.status === 403) {
+                    throw new Error('API access denied. Check API key and permissions.');
+                }
                 const error = await response.json();
                 throw new Error(error.error?.message || 'Failed to save to Google Sheets');
             }
 
+            // If successful, save to local storage as backup
+            this.saveOrders();
             return await response.json();
         } catch (error) {
             console.error('Google Sheets API Error:', error);
-            throw error;
+            // Fall back to local storage if API fails
+            this.saveOrders();
+            throw new Error(`Failed to save to Google Sheets: ${error.message}. Data saved locally.`);
         }
     }
 
