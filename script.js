@@ -33,6 +33,11 @@ class OrderManager {
         
         // Initialize buttons
         this.initializeButtons();
+
+        // Add Google Sheets configuration
+        this.SHEET_ID = '1-Y_OUlLf7DjmUvtsNYTIGWouTvn_1R7B3Ml89mrKV2I';
+        this.API_KEY = 'AIzaSyAP8fzStJpCmjHgEr0h9PWNIdKIelseen0';
+        this.SHEET_NAME = 'Sarphare Khekdewala Orders';
     }
 
     initializeEventListeners() {
@@ -101,7 +106,7 @@ class OrderManager {
         }
     }
 
-    handleSubmit(e) {
+    async handleSubmit(e) {
         e.preventDefault();
         
         const customerName = document.getElementById('customerName').value;
@@ -112,18 +117,68 @@ class OrderManager {
         const price = parseFloat(document.getElementById('price').value);
         const deliveryDate = document.getElementById('deliveryDate').value;
 
-        const order = new Order(
-            customerName, 
-            customerPhone, 
-            customerAddress, 
-            crabType, 
-            quantity, 
-            price,
-            deliveryDate
-        );
-        this.addOrder(order);
-        this.saveOrders();
-        this.form.reset();
+        try {
+            const order = new Order(
+                customerName, 
+                customerPhone, 
+                customerAddress, 
+                crabType, 
+                quantity, 
+                price,
+                deliveryDate
+            );
+            
+            // Save to Google Sheets first
+            await this.saveToGoogleSheets(order);
+            
+            // If successful, save locally
+            this.addOrder(order);
+            this.saveOrders();
+            this.form.reset();
+            this.showToast('Order added successfully');
+        } catch (error) {
+            console.error('Error saving order:', error);
+            this.showToast('Failed to save order', 'error');
+        }
+    }
+
+    async saveToGoogleSheets(order) {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.SHEET_ID}/values/${this.SHEET_NAME}!A:J:append?valueInputOption=RAW&key=${this.API_KEY}`;
+        
+        const row = [
+            new Date().toISOString(),            // Order Date
+            order.customerName,                   // Customer Name
+            order.customerPhone,                  // Phone
+            order.customerAddress,                // Address
+            order.crabType,                      // Crab Type
+            order.quantity,                      // Quantity
+            order.price,                         // Price
+            order.total,                         // Total
+            order.deliveryDate.toISOString(),    // Delivery Date
+            this.getCrabTypeDisplay(order.crabType) // Display Type
+        ];
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    values: [row]
+                })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error.message || 'Failed to save to Google Sheets');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Google Sheets API Error:', error);
+            throw error;
+        }
     }
 
     addOrder(order) {
@@ -182,14 +237,43 @@ class OrderManager {
         localStorage.setItem('crabOrders', JSON.stringify(this.orders));
     }
 
-    loadOrders() {
-        const savedOrders = localStorage.getItem('crabOrders');
-        if (savedOrders) {
-            this.orders = JSON.parse(savedOrders);
-            // Clear existing table rows before loading
+    async loadOrders() {
+        try {
+            // First try to load from Google Sheets
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.SHEET_ID}/values/${this.SHEET_NAME}!A:J?key=${this.API_KEY}`;
+            const response = await fetch(url);
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.values && data.values.length > 1) { // Skip header row
+                    this.orders = data.values.slice(1).map(row => ({
+                        orderDate: new Date(row[0]),
+                        customerName: row[1],
+                        customerPhone: row[2],
+                        customerAddress: row[3],
+                        crabType: row[4],
+                        quantity: parseFloat(row[5]),
+                        price: parseFloat(row[6]),
+                        total: parseFloat(row[7]),
+                        deliveryDate: new Date(row[8])
+                    }));
+                }
+            } else {
+                // Fallback to local storage if API fails
+                const savedOrders = localStorage.getItem('crabOrders');
+                if (savedOrders) {
+                    this.orders = JSON.parse(savedOrders);
+                }
+            }
+
+            // Clear and reload table
             this.table.innerHTML = '';
             this.orders.forEach(order => this.displayOrder(order));
             this.updateTotals();
+            
+        } catch (error) {
+            console.error('Error loading orders:', error);
+            this.showToast('Error loading orders', 'error');
         }
     }
 
