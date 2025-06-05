@@ -1,0 +1,545 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --ocean-blue: #1565C0;
+    --coral: #FF7F50;
+    --shell: #FFF5EE;
+    --text-dark: #333;
+    --text-light: #666;
+}
+
+body {
+    background: linear-gradient(135deg, var(--ocean-blue), var(--deep-sea));
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    margin: 0;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    color: #1565C0;
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 2.5em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+/* Animated Header */
+.site-header {
+    text-align: center;
+    color: var(--shell);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.site-header h1 {
+    font-size: 3em;
+    margin: 0;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Animated Crab Logo */
+.crab-logo {
+    font-size: 4em;
+    animation: dance 3s ease-in-out infinite;
+    display: inline-block;
+}
+
+@keyframes dance {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-20deg); }
+    75% { transform: rotate(20deg); }
+}
+
+/* Card-style Form */
+.order-form {
+    background: var(--shell);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    transform-origin: top;
+    animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+    from { transform: scaleY(0); }
+    to { transform: scaleY(1); }
+}
+
+/* Interactive Form Controls */
+.form-group {
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.form-group label {
+    color: var(--ocean-blue);
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--coral);
+    box-shadow: 0 0 0 3px rgba(255,127,80,0.2);
+    outline: none;
+}
+
+/* Button Styles */
+.btn, 
+button[type="submit"],
+button[type="reset"],
+.download-btn,
+.delete-btn {
+    background: var(--coral);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover,
+button[type="submit"]:hover,
+button[type="reset"]:hover,
+.download-btn:hover {
+    background: #FF6B3D;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active,
+button[type="submit"]:active,
+button[type="reset"]:active,
+.download-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Delete button specific styles */
+.delete-btn {
+    background: #ff4444;
+    min-width: unset;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 8px;
+    font-size: 14px;
+}
+
+.delete-btn:hover {
+    background: #ff0000;
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* Download button specific styles */
+.download-btn {
+    background: var(--ocean-blue);
+    margin: 10px;
+}
+
+.download-btn:hover {
+    background: #005580;
+}
+
+/* Submit button specific styles */
+button[type="submit"] {
+    background: var(--ocean-blue);
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Reset button specific styles */
+button[type="reset"] {
+    background: #666;
+    width: 100%;
+    margin-top: 10px;
+}
+
+/* Button icons */
+.btn span,
+.download-btn span,
+button[type="submit"] span,
+button[type="reset"] span {
+    font-size: 1.2em;
+    line-height: 1;
+}
+
+/* Disabled button state */
+.btn:disabled,
+button[type="submit"]:disabled,
+button[type="reset"]:disabled,
+.download-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Enhanced Table Styling */
+.orders-table {
+    background: var(--shell);
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    animation: fadeIn 0.5s ease-out;
+}
+
+.orders-table thead th {
+    background: var(--ocean-blue);
+    color: white;
+    padding: 15px;
+}
+
+.orders-table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.orders-table tbody tr:hover {
+    background: var(--seafoam);
+    transform: scale(1.01);
+}
+
+/* Totals Section */
+.orders-summary {
+    background: var(--shell);
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-around;
+    animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.summary-item {
+    text-align: center;
+}
+
+.summary-item .label {
+    color: var(--ocean-blue);
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.summary-item .value {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--coral);
+}
+
+.bubbles {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.bubble {
+    position: absolute;
+    bottom: -100px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: rise 15s infinite ease-in;
+}
+
+.bubble:nth-child(1) { left: 10%; animation-duration: 8s; }
+.bubble:nth-child(2) { left: 20%; animation-duration: 12s; animation-delay: 1s; }
+.bubble:nth-child(3) { left: 35%; animation-duration: 10s; animation-delay: 2s; }
+.bubble:nth-child(4) { left: 60%; animation-duration: 15s; animation-delay: 0s; }
+.bubble:nth-child(5) { left: 75%; animation-duration: 11s; animation-delay: 3s; }
+
+@keyframes rise {
+    0% { bottom: -100px; transform: translateX(0); }
+    50% { transform: translateX(100px); }
+    100% { bottom: 100vh; transform: translateX(-20px); }
+}
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: var(--ocean-blue);
+    color: white;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.5px;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+tbody tr:hover {
+    background-color: #f0f8ff;
+    transition: background-color 0.3s ease;
+}
+
+.total-row {
+    background-color: #e3f2fd;
+    font-weight: bold;
+}
+
+.total-row td {
+    border-top: 2px solid var(--ocean-blue);
+}
+
+#totalQty, #totalSum {
+    color: var(--ocean-blue);
+    font-size: 1.1em;
+}
+
+/* Make table responsive */
+.orders-list {
+    overflow-x: auto;
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Style for empty table message */
+tbody:empty::after {
+    content: "No orders yet";
+    display: table-cell;
+    text-align: center;
+    padding: 30px;
+    color: #666;
+    font-style: italic;
+    font-size: 1.1em;
+}
+
+/* Action buttons in table */
+.delete-btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    background: #ff4444;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.delete-btn:hover {
+    background: #cc0000;
+    transform: scale(1.05);
+}
+
+/* Button container */
+.form-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Primary button styles */
+.submit-btn {
+    background: var(--ocean-blue);
+    color: white;
+}
+
+.submit-btn:hover {
+    background: #1976D2;
+}
+
+/* Reset button styles */
+.reset-btn {
+    background: #757575;
+    color: white;
+}
+
+.reset-btn:hover {
+    background: #616161;
+}
+
+/* Download button styles */
+.download-btn {
+    background: var(--coral);
+    color: white;
+    margin-left: auto;
+}
+
+.download-btn:hover {
+    background: #FF6B3D;
+}
+
+/* Delete button styles */
+.delete-btn {
+    background: #ff4444;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.delete-btn:hover {
+    background: #cc0000;
+}
+
+/* Button states */
+.btn:disabled,
+.download-btn:disabled,
+.delete-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Button loading state */
+.btn.loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn.loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Toast notifications */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 4px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.toast-success {
+    background: var(--ocean-blue);
+}
+
+.toast-error {
+    background: #ff4444;
+}
+
+/* New styles for form header and datetime display */
+.form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.datetime-display {
+    text-align: right;
+    color: var(--ocean-blue);
+    font-size: 1.1em;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#currentTime {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+#currentDate {
+    font-size: 0.9em;
+    color: var(--text-light);
+}
