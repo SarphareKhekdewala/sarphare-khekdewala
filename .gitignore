@@ -1,0 +1,40 @@
+# Config files with sensitive data
+config.js
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Build output
+dist/
+build/
+
+# Local development files
+*.local
+
+# Debug files
+debug.log
+
+# Backup files
+*.bak
+*~
