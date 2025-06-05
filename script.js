@@ -18,26 +18,28 @@ class OrderManager {
         this.form = document.getElementById('orderForm');
         this.table = document.getElementById('ordersTable').getElementsByTagName('tbody')[0];
         this.downloadBtn = document.getElementById('downloadReport');
-        if (this.downloadBtn) {
-            this.downloadBtn.addEventListener('click', () => this.downloadReport());
-        }
         
-        // Clear the table first
-        this.table.innerHTML = '';
-        
-        // Initialize event listeners - only once
-        this.initializeEventListeners();
-        
-        // Load existing orders
-        this.loadOrders();
-        
-        // Initialize buttons
-        this.initializeButtons();
+        // Initialize with config values
+        this.SHEET_ID = CONFIG.SHEET_ID;
+        this.API_KEY = CONFIG.API_KEY;
+        this.SHEET_NAME = 'Orders';
 
-        // Add Google Sheets configuration
-        this.SHEET_ID = '1-Y_OUlLf7DjmUvtsNYTIGWouTvn_1R7B3Ml89mrKV2I';
-        this.API_KEY = 'AIzaSyAP8fzStJpCmjHgEr0h9PWNIdKIelseen0';
-        this.SHEET_NAME = 'Sarphare Khekdewala Orders';
+        // Initialize event listeners
+        this.initializeEventListeners();
+        this.loadOrders();
+        this.updateDateTime();
+        setInterval(() => this.updateDateTime(), 1000);
+    }
+
+    updateDateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-IN');
+        document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
     }
 
     initializeEventListeners() {
@@ -66,67 +68,21 @@ class OrderManager {
         });
     }
 
-    initializeButtons() {
-        // Submit button
-        this.form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = e.target.querySelector('.submit-btn');
-            submitBtn.classList.add('loading');
-            
-            try {
-                await this.handleSubmit(e);
-                this.form.reset();
-                this.showToast('Order added successfully');
-            } catch (error) {
-                this.showToast('Error adding order', 'error');
-            } finally {
-                submitBtn.classList.remove('loading');
-            }
-        });
-
-        // Reset button
-        this.form.addEventListener('reset', () => {
-            this.showToast('Form cleared');
-        });
-
-        // Download button
-        const downloadBtn = document.getElementById('downloadReport');
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', async () => {
-                downloadBtn.classList.add('loading');
-                try {
-                    await this.downloadReport();
-                    this.showToast('Report downloaded');
-                } catch (error) {
-                    this.showToast('Error downloading report', 'error');
-                } finally {
-                    downloadBtn.classList.remove('loading');
-                }
-            });
-        }
-    }
-
     async handleSubmit(e) {
         e.preventDefault();
         
-        const customerName = document.getElementById('customerName').value;
-        const customerPhone = document.getElementById('customerPhone').value;
-        const customerAddress = document.getElementById('customerAddress').value;
-        const crabType = document.getElementById('crabType').value;
-        const quantity = parseFloat(document.getElementById('quantity').value);
-        const price = parseFloat(document.getElementById('price').value);
-        const deliveryDate = document.getElementById('deliveryDate').value;
-
         try {
-            const order = new Order(
-                customerName, 
-                customerPhone, 
-                customerAddress, 
-                crabType, 
-                quantity, 
-                price,
-                deliveryDate
-            );
+            const order = {
+                customerName: document.getElementById('customerName').value,
+                customerPhone: document.getElementById('customerPhone').value,
+                customerAddress: document.getElementById('customerAddress').value,
+                crabType: document.getElementById('crabType').value,
+                quantity: parseFloat(document.getElementById('quantity').value),
+                price: parseFloat(document.getElementById('price').value),
+                total: parseFloat(document.getElementById('quantity').value) * parseFloat(document.getElementById('price').value),
+                deliveryDate: new Date(document.getElementById('deliveryDate').value),
+                orderDate: new Date()
+            };
             
             // Save to Google Sheets first
             await this.saveToGoogleSheets(order);
@@ -146,16 +102,16 @@ class OrderManager {
         const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.SHEET_ID}/values/${this.SHEET_NAME}!A:J:append?valueInputOption=RAW&key=${this.API_KEY}`;
         
         const row = [
-            new Date().toISOString(),            // Order Date
-            order.customerName,                   // Customer Name
-            order.customerPhone,                  // Phone
-            order.customerAddress,                // Address
-            order.crabType,                      // Crab Type
-            order.quantity,                      // Quantity
-            order.price,                         // Price
-            order.total,                         // Total
-            order.deliveryDate.toISOString(),    // Delivery Date
-            this.getCrabTypeDisplay(order.crabType) // Display Type
+            order.orderDate.toISOString(),
+            order.customerName,
+            order.customerPhone,
+            order.customerAddress,
+            order.crabType,
+            order.quantity,
+            order.price,
+            order.total,
+            order.deliveryDate.toISOString(),
+            this.getCrabTypeDisplay(order.crabType)
         ];
 
         try {
@@ -171,7 +127,7 @@ class OrderManager {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error.message || 'Failed to save to Google Sheets');
+                throw new Error(error.error?.message || 'Failed to save to Google Sheets');
             }
 
             return await response.json();
@@ -352,7 +308,7 @@ class OrderManager {
         toast.className = `toast toast-${type}`;
         toast.textContent = message;
         document.body.appendChild(toast);
-
+        
         setTimeout(() => {
             toast.classList.add('show');
             setTimeout(() => {
@@ -388,39 +344,12 @@ class OrderManager {
 }
 
 
-// Initialize only once when the page loads
-let orderManager;
-window.addEventListener('load', () => {
-    if (!orderManager) {
-        orderManager = new OrderManager();
+// Initialize the app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof CONFIG === 'undefined') {
+        console.error('Configuration not found! Please check config.js');
+        return;
     }
+    new OrderManager();
 });
-
-function updateDateTime() {
-    const now = new Date();
-    
-    // Update time
-    const timeElement = document.getElementById('currentTime');
-    timeElement.textContent = now.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true
-    });
-    
-    // Update date
-    const dateElement = document.getElementById('currentDate');
-    dateElement.textContent = now.toLocaleDateString('en-IN', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-}
-
-// Update date/time every second
-setInterval(updateDateTime, 1000);
-
-// Initial update
-document.addEventListener('DOMContentLoaded', updateDateTime);
 
