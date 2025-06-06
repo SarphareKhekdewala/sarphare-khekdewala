@@ -13,7 +13,6 @@ class Order {
 }
 
 class OrderManager {
-   class OrderManager {
     constructor() {
         try {
             console.log('Initializing OrderManager...');
@@ -49,7 +48,7 @@ class OrderManager {
             throw error;
         }
     }
-}
+
     updateDateTime() {
         const now = new Date();
         document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-IN');
