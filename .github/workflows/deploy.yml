@@ -1,25 +1,29 @@
-name: Deploy to GitHub Pages
+name: Build and Deploy
 
 on:
   push:
     branches:
-      - main  # or your default branch
+      - main
+
+permissions:
+  contents: write
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
       - name: Generate config.js from template
         run: |
-          echo "Generating config.js..."
+          echo "Creating config.js from template..."
           cp config.template.js config.js
-          sed -i "s|#{GOOGLE_CLIENT_ID}#|${{ secrets.GOOGLE_CLIENT_ID }}|g" config.js
-          sed -i "s|#{GOOGLE_API_KEY}#|${{ secrets.GOOGLE_API_KEY }}|g" config.js
-          sed -i "s|#{GOOGLE_SHEET_ID}#|${{ secrets.GOOGLE_SHEET_ID }}|g" config.js
-
-          echo "✅ config.js generated."
+          sed -i "s|__GOOGLE_CLIENT_ID__|${{ secrets.GOOGLE_CLIENT_ID }}|g" config.js
+          sed -i "s|__GOOGLE_API_KEY__|${{ secrets.GOOGLE_API_KEY }}|g" config.js
+          sed -i "s|__GOOGLE_SHEET_ID__|${{ secrets.GOOGLE_SHEET_ID }}|g" config.js
+          echo "config.js content:"
+          cat config.js
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
