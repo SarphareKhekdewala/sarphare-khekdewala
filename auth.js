@@ -1,38 +1,26 @@
 class GoogleAuthManager {
     constructor() {
-        this.config = null;
+        this.config = window.CONFIG;
         this.tokenClient = null;
-        this.validateAndSetConfig();
-    }
-
-    validateAndSetConfig() {
-        if (!window.CONFIG) throw new Error('CONFIG not found');
-        
-        // Create a clean config object without any placeholder values
-        this.config = {
-            CLIENT_ID: window.CONFIG.CLIENT_ID.replace(/[#{}]/g, '').trim(),
-            API_KEY: window.CONFIG.API_KEY.replace(/[#{}]/g, '').trim(),
-            SHEET_ID: window.CONFIG.SHEET_ID.replace(/[#{}]/g, '').trim(),
-            SHEET_NAME: window.CONFIG.SHEET_NAME,
-            SCOPES: window.CONFIG.SCOPES,
-            DISCOVERY_DOC: window.CONFIG.DISCOVERY_DOC
-        };
     }
 
     async initialize() {
         return new Promise((resolve, reject) => {
             gapi.load('client', async () => {
                 try {
+                    // Wait for client to load
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
                     // Initialize the Google API client
                     await gapi.client.init({
                         apiKey: this.config.API_KEY,
-                        discoveryDocs: [this.config.DISCOVERY_DOC]
+                        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
                     });
 
                     // Set up the OAuth2 client
                     this.tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: this.config.CLIENT_ID,
-                        scope: this.config.SCOPES,
+                        scope: 'https://www.googleapis.com/auth/spreadsheets',
                         callback: '' // Will be set in getToken
                     });
 
@@ -47,7 +35,7 @@ class GoogleAuthManager {
 
     async getToken() {
         if (!this.tokenClient) {
-            await this.initialize();
+            throw new Error('Auth not initialized');
         }
 
         return new Promise((resolve, reject) => {
@@ -70,17 +58,16 @@ class GoogleAuthManager {
 
     async saveToSheet(values) {
         try {
-            await this.getToken();
-            const response = await gapi.client.sheets.spreadsheets.values.append({
+            const token = await this.getToken();
+            return await gapi.client.sheets.spreadsheets.values.append({
                 spreadsheetId: this.config.SHEET_ID,
                 range: `${this.config.SHEET_NAME}!A:J`,
                 valueInputOption: 'RAW',
                 insertDataOption: 'INSERT_ROWS',
                 resource: { values: [values] }
             });
-            return response.result;
         } catch (error) {
-            console.error('Failed to save:', error);
+            console.error('Failed to save to sheet:', error);
             throw error;
         }
     }
