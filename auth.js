@@ -1,6 +1,10 @@
 class GoogleAuthManager {
     constructor() {
-        this.config = window.CONFIG;
+        this.config = {
+            ...window.CONFIG,
+            SCOPES: 'https://www.googleapis.com/auth/spreadsheets',
+            DISCOVERY_DOC: 'https://sheets.googleapis.com/$discovery/rest?version=v4'
+        };
         this.tokenClient = null;
         // Debug: Log full config
         console.log('Current Config:', this.config);
@@ -12,12 +16,12 @@ class GoogleAuthManager {
                 try {
                     await gapi.client.init({
                         apiKey: this.config.API_KEY,
-                        discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
+                        discoveryDocs: [this.config.DISCOVERY_DOC]
                     });
 
                     this.tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: this.config.CLIENT_ID,
-                        scope: 'https://www.googleapis.com/auth/spreadsheets',
+                        scope: this.config.SCOPES,
                         callback: ''
                     });
 
