@@ -1,33 +1,39 @@
-name: Build and Deploy
+name: Build and Deploy to GitHub Pages
 
 on:
   push:
     branches:
-      - main
-
-permissions:
-  contents: write
+      - main  # or "master" depending on your default branch
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
 
-      - name: Generate config.js from template
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Create config.js from template
         run: |
           echo "Creating config.js from template..."
           cp config.template.js config.js
           sed -i "s|__GOOGLE_CLIENT_ID__|${{ secrets.GOOGLE_CLIENT_ID }}|g" config.js
           sed -i "s|__GOOGLE_API_KEY__|${{ secrets.GOOGLE_API_KEY }}|g" config.js
           sed -i "s|__GOOGLE_SHEET_ID__|${{ secrets.GOOGLE_SHEET_ID }}|g" config.js
-          echo "config.js content:"
+          echo "Generated config.js:"
           cat config.js
+
+      - name: Verify config.js exists
+        run: |
+          if [ ! -f config.js ]; then
+            echo "❌ config.js not found!"
+            exit 1
+          fi
+          echo "✅ config.js exists."
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
           branch: gh-pages
-          folder: .
+          folder: .  # deploy current directory (make sure config.js is here)
           token: ${{ secrets.GITHUB_TOKEN }}
