@@ -491,29 +491,23 @@ tbody:empty::after {
 .toast {
     position: fixed;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(100px);
-    background: #333;
-    color: white;
+    right: 20px;
     padding: 12px 24px;
     border-radius: 4px;
+    color: white;
     opacity: 0;
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
     z-index: 1000;
 }
 
 .toast.show {
-    transform: translateX(-50%) translateY(0);
     opacity: 1;
 }
 
-.toast-success {
-    background: var(--ocean-blue);
-}
-
-.toast-error {
-    background: #ff4444;
-}
+.toast-success { background-color: #4caf50; }
+.toast-error { background-color: #f44336; }
+.toast-warning { background-color: #ff9800; }
+.toast-info { background-color: #2196f3; }
 
 /* New styles for form header and datetime display */
 .form-header {
