@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sarphare Khekdewala - Order Management</title>
+  <link rel="stylesheet" href="./styles.css" />
+  
+  <!-- Google API scripts -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  
+  <!-- Config injected via GitHub Actions -->
+ <script>
+  const CONFIG = {
+    CLIENT_ID: '83341235106-9nu6r5tn1029a6h7vkhph1rvr6t8ei3m.apps.googleusercontent.com',
+    API_KEY: 'AIzaSyAP8fzStJpCmjHgEr0h9PWNIdKIelseen0',
+    SHEET_ID: '1-Y_OUlLf7DjmUvtsNYTIGWouTvn_1R7B3Ml89mrKV2I',
+    SHEET_NAME: 'Sarphare Khekdewala Orders'
+  };
+</script>
+
+  <script src="./auth.js"></script>
+  <script src="./script.js" defer></script>
+</head>
+<body>
+    <div class="container">
+        <div class="site-header">
+            <span class="crab-logo">🦀</span>
+            <h1>Sarphare Khekdewala</h1>
+            <p class="subtitle">Fresh Crab Order Management System</p>
+        </div>
+        
+        <div class="order-form">
+            <div class="form-header">
+                <h2>New Order</h2>
+                <div class="datetime-display">
+                    <div id="currentTime">--:--:--</div>
+                    <div id="currentDate">--/--/----</div>
+                </div>
+            </div>
+            <form id="orderForm">
+                <div class="form-group">
+                    <label for="customerName">Customer Name:</label>
+                    <input type="text" id="customerName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="customerPhone">Contact Number:</label>
+                    <input type="tel" id="customerPhone" pattern="[0-9]{10}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customerAddress">Address:</label>
+                    <textarea id="customerAddress" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="crabType">Crab Type:</label>
+                    <select id="crabType" required>
+                        <option value="">Select Crab Type</option>
+                        <option value="small">Small (9-10 crabs)</option>
+                        <option value="medium">Medium (6-7 crabs)</option>
+                        <option value="big5">Big (5 crabs)</option>
+                        <option value="big4">Big (4 crabs)</option>
+                        <option value="big3">Big (3 crabs)</option>
+                        <option value="big2">Big (2 crabs)</option>
+                        <option value="green-small">Green Crabs (500-700g)</option>
+                        <option value="green-large">Green Crabs (800g-1.5kg)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="quantity">Quantity (kg):</label>
+                    <input type="number" id="quantity" min="0.5" step="0.5" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="price">Price per kg:</label>
+                    <input type="number" id="price" min="0" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="deliveryDate">Delivery Date:</label>
+                    <input type="date" id="deliveryDate" required>
+                    <span id="deliveryDay"></span>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn submit-btn">
+                        <span>➕</span> Add Order
+                    </button>
+                    <button type="reset" class="btn reset-btn">
+                        <span>🔄</span> Clear Form
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="orders-list">
+            <div class="list-header">
+                <h2>Orders List</h2>
+                <button id="downloadReport" class="download-btn">
+                    <span>📥</span> Download Report
+                </button>
+            </div>
+            
+            <div class="orders-summary">
+                <h3>Daily Summary</h3>
+                <p>Total Orders: <span id="totalOrders">0</span></p>
+                <p>Total Amount: ₹<span id="totalAmount">0.00</span></p>
+            </div>
+
+            <table id="ordersTable">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Time</th>
+                        <th>Customer</th>
+                        <th>Contact</th>
+                        <th>Address</th>
+                        <th>Crab Type</th>
+                        <th>Quantity</th>
+                        <th>Price/kg</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="6">Daily Totals</td>
+                        <td id="totalQty">0 kg</td>
+                        <td>-</td>
+                        <td id="totalSum">₹0.00</td>
+                        <td>-</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+        <div class="bubble"></div>
+    </div>
+</body>
+</html>
