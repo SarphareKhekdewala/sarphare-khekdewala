@@ -14,27 +14,51 @@ class Order {
 
 class OrderManager {
     constructor() {
-        this.orders = [];
-        this.form = document.getElementById('orderForm');
-        this.table = document.getElementById('ordersTable').getElementsByTagName('tbody')[0];
-        this.downloadBtn = document.getElementById('downloadReport');
-        
-        // Initialize with config values
-        this.SHEET_ID = CONFIG.SHEET_ID;
-        this.API_KEY = CONFIG.API_KEY;
-        this.SHEET_NAME = 'Orders';
+        try {
+            console.log('Initializing OrderManager...');
+            
+            // Check if CONFIG exists and has required values
+            if (!CONFIG) throw new Error('CONFIG is not defined');
+            if (!CONFIG.SHEET_ID) throw new Error('SHEET_ID is not defined in CONFIG');
+            if (!CONFIG.API_KEY) throw new Error('API_KEY is not defined in CONFIG');
+            
+            // Set class properties from CONFIG
+            this.SHEET_ID = CONFIG.SHEET_ID;
+            this.SHEET_NAME = CONFIG.SHEET_NAME || 'Orders';
+            this.API_KEY = CONFIG.API_KEY;
+            
+            // Initialize properties
+            this.orders = [];
+            this.form = document.getElementById('orderForm');
+            if (!this.form) throw new Error('Order form not found');
 
-        // Initialize event listeners
-        this.initializeEventListeners();
-        this.loadOrders();
-        this.updateDateTime();
-        setInterval(() => this.updateDateTime(), 1000);
-        
-        console.log('OrderManager initialized');
-        this.form.addEventListener('submit', (e) => {
-            console.log('Form submitted');
-            this.handleSubmit(e);
-        });
+            // Initialize table
+            const ordersTable = document.getElementById('ordersTable');
+            if (!ordersTable) throw new Error('Orders table not found');
+            this.table = ordersTable.getElementsByTagName('tbody')[0];
+            
+            // Initialize Google Auth
+            this.auth = new GoogleAuthManager(CONFIG);
+            this.initializeApp();
+            
+        } catch (error) {
+            console.error('Constructor error:', error);
+            throw error;
+        }
+    }
+
+    async initializeApp() {
+        try {
+            await this.auth.initialize();
+            this.initializeEventListeners();
+            await this.loadOrders();
+            this.updateDateTime();
+            setInterval(() => this.updateDateTime(), 1000);
+            console.log('App initialized successfully');
+        } catch (error) {
+            console.error('App initialization error:', error);
+            throw error;
+        }
     }
 
     updateDateTime() {
@@ -76,83 +100,99 @@ class OrderManager {
 
     async handleSubmit(e) {
         e.preventDefault();
+        console.log('Handling form submission...');
         
         try {
-            // Create order object from form data
+            // Show loading state
+            this.showToast('Processing order...', 'info');
+            
+            // Validate form data
+            const formData = {
+                customerName: document.getElementById('customerName').value,
+                customerPhone: document.getElementById('customerPhone').value,
+                customerAddress: document.getElementById('customerAddress').value,
+                crabType: document.getElementById('crabType').value,
+                quantity: parseFloat(document.getElementById('quantity').value),
+                price: parseFloat(document.getElementById('price').value),
+                deliveryDate: document.getElementById('deliveryDate').value
+            };
+
+            console.log('Form data:', formData);
+
+            // Create order object
             const order = new Order(
-                document.getElementById('customerName').value,
-                document.getElementById('customerPhone').value,
-                document.getElementById('customerAddress').value,
-                document.getElementById('crabType').value,
-                parseFloat(document.getElementById('quantity').value),
-                parseFloat(document.getElementById('price').value),
-                document.getElementById('deliveryDate').value
+                formData.customerName,
+                formData.customerPhone,
+                formData.customerAddress,
+                formData.crabType,
+                formData.quantity,
+                formData.price,
+                formData.deliveryDate
             );
             
-            // Save to Google Sheets first
-            await this.saveToGoogleSheets(order);
+            // First try to save to Google Sheets
+            try {
+                await this.saveToGoogleSheets(order);
+                console.log('Saved to Google Sheets successfully');
+            } catch (error) {
+                console.error('Google Sheets error:', error);
+                this.showToast('Saving locally - ' + error.message, 'warning');
+            }
             
             // Add to local list and display
             this.addOrder(order);
             this.saveOrders();
+            this.updateTotals(); // Make sure totals are updated
             
-            // Reset form and show success message
+            // Reset form
             this.form.reset();
-            this.showToast('Order added successfully');
+            
+            // Set today's date again after reset
+            const dateInput = document.getElementById('deliveryDate');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.value = today;
+            
+            this.showToast('Order saved successfully', 'success');
             
         } catch (error) {
-            console.error('Error saving order:', error);
+            console.error('Submit error:', error);
             this.showToast('Failed to save order: ' + error.message, 'error');
         }
     }
 
     async saveToGoogleSheets(order) {
-        console.log('Saving to Google Sheets:', order);
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.SHEET_ID}/values/${this.SHEET_NAME}!A:J:append?valueInputOption=RAW&key=${this.API_KEY}`;
-        
-        const row = [
-            order.orderDate.toISOString(),
-            order.customerName,
-            order.customerPhone,
-            order.customerAddress,
-            order.crabType,
-            order.quantity,
-            order.price,
-            order.total,
-            order.deliveryDate.toISOString(),
-            this.getCrabTypeDisplay(order.crabType)
-        ];
-
         try {
-            const response = await fetch(url, {
-                method: 'POST',
-                mode: 'cors', // Add CORS mode
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Origin': window.location.origin // Add origin header
-                },
-                body: JSON.stringify({
+            // Get access token
+            await this.auth.getToken();
+
+            const row = [
+                order.orderDate.toISOString(),
+                order.customerName,
+                order.customerPhone,
+                order.customerAddress,
+                order.crabType,
+                order.quantity,
+                order.price,
+                order.total,
+                order.deliveryDate.toISOString(),
+                this.getCrabTypeDisplay(order.crabType)
+            ];
+
+            const response = await gapi.client.sheets.spreadsheets.values.append({
+                spreadsheetId: this.SHEET_ID,
+                range: `${this.SHEET_NAME}!A:J`,
+                valueInputOption: 'RAW',
+                insertDataOption: 'INSERT_ROWS',
+                resource: {
                     values: [row]
-                })
+                }
             });
 
-            if (!response.ok) {
-                // Handle specific error cases
-                if (response.status === 403) {
-                    throw new Error('API access denied. Check API key and permissions.');
-                }
-                const error = await response.json();
-                throw new Error(error.error?.message || 'Failed to save to Google Sheets');
-            }
-
-            // If successful, save to local storage as backup
-            this.saveOrders();
-            return await response.json();
+            console.log('Google Sheets response:', response);
+            return response;
         } catch (error) {
             console.error('Google Sheets API Error:', error);
-            // Fall back to local storage if API fails
-            this.saveOrders();
-            throw new Error(`Failed to save to Google Sheets: ${error.message}. Data saved locally.`);
+            throw error;
         }
     }
 
@@ -198,6 +238,7 @@ class OrderManager {
             this.updateTotals();
         });
 
+        // Make sure to call updateTotals after adding new order
         this.updateTotals();
     }
 
@@ -215,12 +256,16 @@ class OrderManager {
 
     async loadOrders() {
         try {
+            console.log('Loading orders...');
             // First try to load from Google Sheets
             const url = `https://sheets.googleapis.com/v4/spreadsheets/${this.SHEET_ID}/values/${this.SHEET_NAME}!A:J?key=${this.API_KEY}`;
+            console.log('Fetching from URL:', url);
+            
             const response = await fetch(url);
             
             if (response.ok) {
                 const data = await response.json();
+                console.log('Loaded data:', data);
                 if (data.values && data.values.length > 1) { // Skip header row
                     this.orders = data.values.slice(1).map(row => ({
                         orderDate: new Date(row[0]),
@@ -235,6 +280,7 @@ class OrderManager {
                     }));
                 }
             } else {
+                console.error('Failed to load from Google Sheets:', response.status, response.statusText);
                 // Fallback to local storage if API fails
                 const savedOrders = localStorage.getItem('crabOrders');
                 if (savedOrders) {
@@ -364,12 +410,14 @@ class OrderManager {
 }
 
 
-// Initialize the app when DOM is loaded
+// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    if (typeof CONFIG === 'undefined') {
-        console.error('Configuration not found! Please check config.js');
-        return;
+    console.log('DOM loaded, initializing app...');
+    try {
+        new OrderManager();
+    } catch (error) {
+        console.error('Initialization error:', error);
+        alert('Failed to initialize the application. Check console for details.');
     }
-    new OrderManager();
 });
 
