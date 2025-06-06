@@ -1,5 +1,8 @@
+
 const PROXY = 'https://corsproxy.io/?';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAIJjgGz1HkadgC4fLv_BSd-9Xsaoq_K_JBHrMMian7UvJV_rkT4jT9gXH3Cu6T-Qb/exec';
+const URL = APPS_SCRIPT_URL;
+const URL = PROXY + APPS_SCRIPT_URL;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const manager = new OrderManager();
@@ -39,7 +42,7 @@ class OrderManager {
 
   async loadOrders() {
     try {
-      const res = await fetch(APPS_SCRIPT_URL);
+      const res = await fetch(URL);
       const rows = await res.json();
 
       this.ordersTable.innerHTML = '';
@@ -93,7 +96,7 @@ class OrderManager {
     };
 
     try {
-      const res = await fetch(APPS_SCRIPT_URL, {
+      const res = await fetch(URL, {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: {
@@ -126,7 +129,4 @@ class OrderManager {
     a.download = `orders_report_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   }
-  const res = await fetch(PROXY + APPS_SCRIPT_URL, {
-  method: 'GET'
-});
 }
