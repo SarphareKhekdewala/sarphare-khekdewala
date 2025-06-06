@@ -6,25 +6,30 @@ class GoogleAuthManager {
     }
 
     validateConfig() {
+        console.log('Validating config...');
         if (!window.CONFIG) {
-            throw new Error('Missing window.CONFIG');
+            throw new Error('CONFIG not found');
         }
 
-        ['CLIENT_ID', 'API_KEY', 'SHEET_ID'].forEach(key => {
+        const required = ['CLIENT_ID', 'API_KEY', 'SHEET_ID'];
+        required.forEach(key => {
             const value = window.CONFIG[key];
-            if (!value || value.length < 10) {
-                throw new Error(`${key} is not properly configured`);
+            if (!value || value.includes('#{') || value.includes('}#')) {
+                console.error(`Invalid ${key}:`, value);
+                throw new Error(`${key} not properly configured`);
             }
         });
 
-        this.config = window.CONFIG;
+        this.config = {...window.CONFIG};
+        console.log('Config validation passed');
     }
 
     async initialize() {
         try {
+            console.log('Initializing Google Auth...');
             await this.loadGAPIClient();
             await this.initializeGISClient();
-            return true;
+            console.log('Google Auth initialized successfully');
         } catch (error) {
             console.error('Auth initialization failed:', error);
             throw error;
@@ -49,41 +54,13 @@ class GoogleAuthManager {
 
     async initializeGISClient() {
         if (!google?.accounts?.oauth2) {
-            throw new Error('Google Identity Services not available');
+            throw new Error('Google Identity Services not loaded');
         }
 
         this.tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: this.config.CLIENT_ID,
             scope: this.config.SCOPES,
             callback: ''
-        });
-    }
-
-    async getToken() {
-        if (!this.tokenClient) {
-            throw new Error('Auth not initialized');
-        }
-
-        return new Promise((resolve, reject) => {
-            try {
-                this.tokenClient.callback = (resp) => {
-                    if (resp.error) {
-                        this.isAuthenticated = false;
-                        reject(resp);
-                        return;
-                    }
-                    this.isAuthenticated = true;
-                    resolve(resp.access_token);
-                };
-
-                if (gapi.client.getToken() === null) {
-                    this.tokenClient.requestAccessToken();
-                } else {
-                    resolve(gapi.client.getToken().access_token);
-                }
-            } catch (error) {
-                reject(error);
-            }
         });
     }
 }
