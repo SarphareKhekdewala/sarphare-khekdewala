@@ -1,9 +1,7 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  const config = window.CONFIG;
-  console.log('CONFIG:', config); // debug: ensure placeholders are replaced
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAIJjgGz1HkadgC4fLv_BSd-9Xsaoq_K_JBHrMMian7UvJV_rkT4jT9gXH3Cu6T-Qb/exec';
 
-  const auth = new GoogleAuth(config);
-  const manager = new OrderManager(auth);
+document.addEventListener('DOMContentLoaded', async () => {
+  const manager = new OrderManager();
   await manager.loadOrders();
 
   document.getElementById('orderForm').addEventListener('submit', async e => {
@@ -30,8 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 class OrderManager {
-  constructor(auth) {
-    this.auth = auth;
+  constructor() {
     this.ordersTable = document.querySelector('#ordersTable tbody');
     this.totalOrdersEl = document.getElementById('totalOrders');
     this.totalAmountEl = document.getElementById('totalAmount');
@@ -40,37 +37,43 @@ class OrderManager {
   }
 
   async loadOrders() {
-    const rows = await this.auth.getAllRows();
-    this.ordersTable.innerHTML = '';
-    let totAmt = 0, totQty = 0;
+    try {
+      const res = await fetch(APPS_SCRIPT_URL);
+      const rows = await res.json();
 
-    rows.slice(1).forEach((r, i) => {
-      const qty = parseFloat(r[6] || 0);
-      const price = parseFloat(r[7] || 0);
-      const total = qty * price;
-      totQty += qty;
-      totAmt += total;
+      this.ordersTable.innerHTML = '';
+      let totAmt = 0, totQty = 0;
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${i + 1}</td>
-        <td>${r[0]}</td>
-        <td>${r[1]}</td>
-        <td>${r[2]}</td>
-        <td>${r[3]}</td>
-        <td>${r[4]}</td>
-        <td>${qty.toFixed(1)} kg</td>
-        <td>₹${price.toFixed(2)}</td>
-        <td>₹${total.toFixed(2)}</td>
-        <td>-</td>
-      `;
-      this.ordersTable.appendChild(tr);
-    });
+      rows.slice(1).forEach((r, i) => {
+        const qty = parseFloat(r[6] || 0);
+        const price = parseFloat(r[7] || 0);
+        const total = qty * price;
+        totQty += qty;
+        totAmt += total;
 
-    this.totalOrdersEl.textContent = Math.max(rows.length - 1, 0);
-    this.totalAmountEl.textContent = totAmt.toFixed(2);
-    this.totalQtyEl.textContent = `${totQty.toFixed(1)} kg`;
-    this.totalSumEl.textContent = `₹${totAmt.toFixed(2)}`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${i + 1}</td>
+          <td>${r[0]}</td>
+          <td>${r[1]}</td>
+          <td>${r[2]}</td>
+          <td>${r[3]}</td>
+          <td>${r[4]}</td>
+          <td>${qty.toFixed(1)} kg</td>
+          <td>₹${price.toFixed(2)}</td>
+          <td>₹${total.toFixed(2)}</td>
+          <td>-</td>
+        `;
+        this.ordersTable.appendChild(tr);
+      });
+
+      this.totalOrdersEl.textContent = Math.max(rows.length - 1, 0);
+      this.totalAmountEl.textContent = totAmt.toFixed(2);
+      this.totalQtyEl.textContent = `${totQty.toFixed(1)} kg`;
+      this.totalSumEl.textContent = `₹${totAmt.toFixed(2)}`;
+    } catch (err) {
+      console.error('Failed to load orders:', err);
+    }
   }
 
   async addOrder() {
@@ -83,9 +86,31 @@ class OrderManager {
     const price = parseFloat(document.getElementById('price').value).toFixed(2);
     const delDate = document.getElementById('deliveryDate').value;
 
-    await this.auth.appendRow([now, name, phone, addr, type, delDate, qty, price]);
-    document.getElementById('orderForm').reset();
-    await this.loadOrders();
+    const payload = {
+      action: 'append',
+      row: [now, name, phone, addr, type, delDate, qty, price]
+    };
+
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        document.getElementById('orderForm').reset();
+        await this.loadOrders();
+      } else {
+        alert('Error saving order.');
+        console.error(result.error);
+      }
+    } catch (err) {
+      console.error('Failed to add order:', err);
+    }
   }
 
   downloadCSV() {
