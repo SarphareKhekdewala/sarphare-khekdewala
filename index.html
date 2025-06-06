@@ -5,7 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sarphare Khekdewala - Order Management</title>
     <link rel="stylesheet" href="./styles.css">
-    <script src="./script.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        // Config will be injected by GitHub Actions
+        window.CONFIG = {
+            CLIENT_ID: '#{GOOGLE_CLIENT_ID}#',
+            API_KEY: '#{GOOGLE_API_KEY}#',
+            SHEET_ID: '#{GOOGLE_SHEET_ID}#',
+            SHEET_NAME: 'Orders',
+            SCOPES: 'https://www.googleapis.com/auth/spreadsheets',
+            DISCOVERY_DOC: 'https://sheets.googleapis.com/$discovery/rest?version=v4'
+        };
+    </script>
+    <script src="./auth.js"></script>
+    <script src="./script.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -67,7 +81,7 @@
                 <div class="form-group">
                     <label for="deliveryDate">Delivery Date:</label>
                     <input type="date" id="deliveryDate" required>
-                    <span id="deliveryDay" class="date-info"></span>
+                    <span id="deliveryDay"></span>
                 </div>
 
                 <div class="form-actions">
