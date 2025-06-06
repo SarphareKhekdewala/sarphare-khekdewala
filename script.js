@@ -1,3 +1,4 @@
+const PROXY = 'https://corsproxy.io/?';
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAIJjgGz1HkadgC4fLv_BSd-9Xsaoq_K_JBHrMMian7UvJV_rkT4jT9gXH3Cu6T-Qb/exec';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -125,4 +126,7 @@ class OrderManager {
     a.download = `orders_report_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
   }
+  const res = await fetch(PROXY + APPS_SCRIPT_URL, {
+  method: 'GET'
+});
 }
