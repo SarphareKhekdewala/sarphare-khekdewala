@@ -40,7 +40,9 @@ class OrderManager {
     async initializeApp() {
         try {
             await this.auth.initialize();
-            this.initializeEventListeners();
+            this.setupEventListeners();
+            this.updateDateTime();
+            setInterval(() => this.updateDateTime(), 1000);
             await this.loadOrders();
             console.log('App initialized successfully');
         } catch (error) {
@@ -60,7 +62,7 @@ class OrderManager {
         });
     }
 
-    initializeEventListeners() {
+    setupEventListeners() {
         // Remove any existing listeners first
         const newForm = this.form.cloneNode(true);
         this.form.parentNode.replaceChild(newForm, this.form);
@@ -68,6 +70,9 @@ class OrderManager {
         
         // Add the submit listener
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        
+        // Add reset listener
+        this.form.addEventListener('reset', () => this.handleReset());
         
         // Add download listener
         if (this.downloadBtn) {
@@ -395,6 +400,10 @@ class OrderManager {
         document.getElementById('totalQty').textContent = `${totalQty} kg`;
         document.getElementById('totalSum').textContent = `₹${totalAmount.toFixed(2)}`;
     }
+
+    handleReset() {
+        setTimeout(() => document.getElementById('customerName').focus(), 0);
+    }
 }
 
 
@@ -408,4 +417,3 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Failed to initialize the application. Check console for details.');
     }
 });
-
