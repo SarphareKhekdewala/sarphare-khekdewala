@@ -2,30 +2,31 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-      - name: Replace config placeholders
+      - name: Replace secrets in index.html
         run: |
-          echo "🔄 Replacing config placeholders..."
+          echo "Injecting secrets into index.html..."
           sed -i "s|#{GOOGLE_CLIENT_ID}#|${{ secrets.GOOGLE_CLIENT_ID }}|g" index.html
           sed -i "s|#{GOOGLE_API_KEY}#|${{ secrets.GOOGLE_API_KEY }}|g" index.html
           sed -i "s|#{GOOGLE_SHEET_ID}#|${{ secrets.GOOGLE_SHEET_ID }}|g" index.html
 
-          echo "✅ Replacement done — checking for unreplaced placeholders..."
-          if grep -R "#\{GOOGLE_" index.html; then
-            echo "❌ ERROR: Unreplaced placeholders found!"
+          echo "Verifying replacements..."
+          if grep -q "#{GOOGLE_" index.html; then
+            echo "❌ ERROR: Not all secrets were replaced!"
             exit 1
           fi
+          echo "✅ Secrets injected successfully."
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
           branch: gh-pages
           folder: .
+
