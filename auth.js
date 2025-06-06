@@ -11,28 +11,18 @@ class GoogleAuthManager {
         }
     }
 
-    validateConfig() {
-        if (!window.CONFIG) {
-            throw new Error('Missing window.CONFIG');
-        }
-
-        // Debug log the exact values (sanitized)
-        console.log('Config Values Check:', {
-            clientIdLength: window.CONFIG.CLIENT_ID?.length || 0,
-            apiKeyLength: window.CONFIG.API_KEY?.length || 0,
-            sheetIdLength: window.CONFIG.SHEET_ID?.length || 0
-        });
-
-        ['CLIENT_ID', 'API_KEY', 'SHEET_ID'].forEach(key => {
-            const value = window.CONFIG[key];
-            if (!value || 
-                value === '#{GOOGLE_' + key + '}#' || 
-                value.includes('#{') || 
-                value.includes('}#')) {
-                throw new Error(`${key} is not properly configured`);
-            }
-        });
-
-        this.config = window.CONFIG;
+   validateConfig() {
+    if (!window.CONFIG) {
+        throw new Error('Missing window.CONFIG');
     }
+
+    ['CLIENT_ID', 'API_KEY', 'SHEET_ID'].forEach(key => {
+        const value = window.CONFIG[key];
+        if (!value || value.length < 10) {  // Simple length check
+            throw new Error(`${key} is not properly configured`);
+        }
+    });
+
+    this.config = window.CONFIG;
+}
 }
