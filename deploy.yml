@@ -7,23 +7,27 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
 
-      - name: Replace secrets
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Replace secrets in index.html
         run: |
-          echo "Replacing API credentials..."
+          echo "Replacing API credentials in index.html..."
           sed -i "s|#{GOOGLE_CLIENT_ID}#|${{ secrets.GOOGLE_CLIENT_ID }}|g" index.html
           sed -i "s|#{GOOGLE_API_KEY}#|${{ secrets.GOOGLE_API_KEY }}|g" index.html
           sed -i "s|#{GOOGLE_SHEET_ID}#|${{ secrets.GOOGLE_SHEET_ID }}|g" index.html
-          
-          echo "Checking replacements..."
-          if grep -q "#{GOOGLE_" index.html; then
-            echo "Error: Found unreplaced values"
+
+          echo "Validating replacements..."
+          if grep -q '#{GOOGLE_' index.html; then
+            echo "❌ Error: Found unreplaced values!"
             exit 1
+          else
+            echo "✅ All secrets replaced successfully."
           fi
 
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
           branch: gh-pages
