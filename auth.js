@@ -1,23 +1,33 @@
 class GoogleAuthManager {
     constructor() {
-        this.config = window.CONFIG;
+        this.config = null;
         this.tokenClient = null;
+        this.initializeConfig();
+    }
+
+    initializeConfig() {
+        const config = window.CONFIG;
+        
+        // Clean the config values
+        this.config = {
+            CLIENT_ID: config.CLIENT_ID.replace(/['"#{}]/g, '').trim(),
+            API_KEY: config.API_KEY.replace(/['"#{}]/g, '').trim(),
+            SHEET_ID: config.SHEET_ID.replace(/['"#{}]/g, '').trim(),
+            SHEET_NAME: config.SHEET_NAME
+        };
     }
 
     async initialize() {
         return new Promise((resolve, reject) => {
             gapi.load('client', async () => {
                 try {
-                    // Wait for client to load
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-
-                    // Initialize the Google API client
+                    // Initialize Google API client
                     await gapi.client.init({
                         apiKey: this.config.API_KEY,
                         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
                     });
 
-                    // Set up the OAuth2 client
+                    // Initialize OAuth client
                     this.tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: this.config.CLIENT_ID,
                         scope: 'https://www.googleapis.com/auth/spreadsheets',
