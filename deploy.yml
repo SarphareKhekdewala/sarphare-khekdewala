@@ -7,24 +7,21 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Replace secrets in index.html
+      - name: Replace config placeholders
         run: |
-          echo "Replacing API credentials in index.html..."
+          echo "🔄 Replacing config placeholders..."
           sed -i "s|#{GOOGLE_CLIENT_ID}#|${{ secrets.GOOGLE_CLIENT_ID }}|g" index.html
           sed -i "s|#{GOOGLE_API_KEY}#|${{ secrets.GOOGLE_API_KEY }}|g" index.html
           sed -i "s|#{GOOGLE_SHEET_ID}#|${{ secrets.GOOGLE_SHEET_ID }}|g" index.html
 
-          echo "Validating replacements..."
-          if grep -q '#{GOOGLE_' index.html; then
-            echo "❌ Error: Found unreplaced values!"
+          echo "✅ Replacement done — checking for unreplaced placeholders..."
+          if grep -R "#\{GOOGLE_" index.html; then
+            echo "❌ ERROR: Unreplaced placeholders found!"
             exit 1
-          else
-            echo "✅ All secrets replaced successfully."
           fi
 
       - name: Deploy to GitHub Pages
