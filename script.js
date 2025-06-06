@@ -1,8 +1,4 @@
-
-
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAIJjgGz1HkadgC4fLv_BSd-9Xsaoq_K_JBHrMMian7UvJV_rkT4jT9gXH3Cu6T-Qb/exec';
-const URL = APPS_SCRIPT_URL;
-
 document.addEventListener('DOMContentLoaded', async () => {
   const manager = new OrderManager();
   await manager.loadOrders();
@@ -41,7 +37,7 @@ class OrderManager {
 
   async loadOrders() {
     try {
-      const res = await fetch(URL);
+      const res = await fetch(APPS_SCRIPT_URL);
       const rows = await res.json();
 
       this.ordersTable.innerHTML = '';
@@ -80,7 +76,7 @@ class OrderManager {
   }
 
   async addOrder() {
-    const now = new Date().toLocaleTimeString('en-IN');
+    const now = new Date().toISOString();
     const name = document.getElementById('customerName').value;
     const phone = document.getElementById('customerPhone').value;
     const addr = document.getElementById('customerAddress').value;
@@ -91,16 +87,18 @@ class OrderManager {
 
     const payload = {
       action: 'append',
-      row: [now, name, phone, addr, type, delDate, qty, price]
+      row: JSON.stringify([now, name, phone, addr, type, delDate, qty, price])
     };
 
     try {
-      const res = await fetch(URL, {
+      const formData = new URLSearchParams(payload).toString();
+
+      const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        body: JSON.stringify(payload),
         headers: {
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData
       });
 
       const result = await res.json();
@@ -129,3 +127,4 @@ class OrderManager {
     a.click();
   }
 }
+
