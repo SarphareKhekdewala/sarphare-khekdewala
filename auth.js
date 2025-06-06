@@ -1,5 +1,6 @@
 class GoogleAuthManager {
     constructor() {
+        // Remove trim() from initial config load
         this.config = window.CONFIG;
         this.tokenClient = null;
         this.isInitialized = false;
@@ -11,20 +12,29 @@ class GoogleAuthManager {
         return new Promise((resolve, reject) => {
             gapi.load('client', async () => {
                 try {
+                    // Initialize Google API client
                     await gapi.client.init({
-                        apiKey: this.config.API_KEY.trim(),
+                        apiKey: this.config.API_KEY,
                         discoveryDocs: ['https://sheets.googleapis.com/$discovery/rest?version=v4']
                     });
 
-                    this.tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: this.config.CLIENT_ID.trim(),
-                        scope: 'https://www.googleapis.com/auth/spreadsheets',
-                        callback: ''
-                    });
+                    // Initialize Google Identity Services client
+                    google.accounts.oauth2.initTokenClient({
+                        client_id: this.config.CLIENT_ID,
+                        scope: this.config.SCOPES,
+                        callback: (tokenResponse) => {
+                            if (tokenResponse.error) {
+                                reject(tokenResponse);
+                                return;
+                            }
+                            this.tokenClient = tokenResponse;
+                            this.isInitialized = true;
+                            resolve();
+                        }
+                    }).requestAccessToken();
 
-                    this.isInitialized = true;
-                    resolve();
                 } catch (error) {
+                    console.error('Initialization error:', error);
                     reject(error);
                 }
             });
@@ -32,39 +42,24 @@ class GoogleAuthManager {
     }
 
     async getToken() {
-        return new Promise((resolve, reject) => {
-            if (!this.tokenClient) {
-                reject(new Error('Auth not initialized'));
-                return;
-            }
-
-            this.tokenClient.callback = (response) => {
-                if (response.error) {
-                    reject(response);
-                    return;
-                }
-                resolve(response.access_token);
-            };
-
-            if (gapi.client.getToken() === null) {
-                this.tokenClient.requestAccessToken();
-            } else {
-                resolve(gapi.client.getToken().access_token);
-            }
-        });
+        if (!this.isInitialized) {
+            await this.initialize();
+        }
+        return this.tokenClient.access_token;
     }
 
     async saveToSheet(values) {
         try {
-            await this.getToken();
+            const token = await this.getToken();
             return await gapi.client.sheets.spreadsheets.values.append({
-                spreadsheetId: this.config.SHEET_ID.trim(),
+                spreadsheetId: this.config.SHEET_ID,
                 range: `${this.config.SHEET_NAME}!A:J`,
                 valueInputOption: 'RAW',
                 insertDataOption: 'INSERT_ROWS',
                 resource: { values: [values] }
             });
         } catch (error) {
+            console.error('Sheet save error:', error);
             throw new Error(`Failed to save to sheet: ${error.message}`);
         }
     }
