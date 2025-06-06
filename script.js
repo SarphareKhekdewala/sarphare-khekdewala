@@ -13,19 +13,10 @@ class Order {
 }
 
 class OrderManager {
+   class OrderManager {
     constructor() {
         try {
             console.log('Initializing OrderManager...');
-            
-            // Check if CONFIG exists and has required values
-            if (!CONFIG) throw new Error('CONFIG is not defined');
-            if (!CONFIG.SHEET_ID) throw new Error('SHEET_ID is not defined in CONFIG');
-            if (!CONFIG.API_KEY) throw new Error('API_KEY is not defined in CONFIG');
-            
-            // Set class properties from CONFIG
-            this.SHEET_ID = CONFIG.SHEET_ID;
-            this.SHEET_NAME = CONFIG.SHEET_NAME || 'Orders';
-            this.API_KEY = CONFIG.API_KEY;
             
             // Initialize properties
             this.orders = [];
@@ -38,7 +29,7 @@ class OrderManager {
             this.table = ordersTable.getElementsByTagName('tbody')[0];
             
             // Initialize Google Auth
-            this.auth = new GoogleAuthManager(CONFIG);
+            this.auth = new GoogleAuthManager();
             this.initializeApp();
             
         } catch (error) {
@@ -52,15 +43,13 @@ class OrderManager {
             await this.auth.initialize();
             this.initializeEventListeners();
             await this.loadOrders();
-            this.updateDateTime();
-            setInterval(() => this.updateDateTime(), 1000);
             console.log('App initialized successfully');
         } catch (error) {
             console.error('App initialization error:', error);
             throw error;
         }
     }
-
+}
     updateDateTime() {
         const now = new Date();
         document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-IN');
