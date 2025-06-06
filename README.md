@@ -19,4 +19,4 @@ A web-based order management system for fresh crab business.
 
 ## Visit Website
 
-[Visit Sarphare Khekdewala][(https://[YOUR_USERNAME].github.io/sarphare-khekdewala)](https://github.com/SarphareKhekdewala/sarphare-khekdewala.git)
+[Visit Sarphare Khekdewala][(https://sarpharekhekdewala.github.io/sarphare-khekdewala)](https://github.com/SarphareKhekdewala/sarphare-khekdewala.git)
