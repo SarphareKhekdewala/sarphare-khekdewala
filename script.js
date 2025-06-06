@@ -29,7 +29,7 @@ class OrderManager {
             
             // Initialize Google Auth
             this.auth = new GoogleAuthManager();
-            this.initializeApp();
+            this.initialize();
             
         } catch (error) {
             console.error('Constructor error:', error);
@@ -37,7 +37,7 @@ class OrderManager {
         }
     }
 
-    async initializeApp() {
+    async initialize() {
         try {
             await this.auth.initialize();
             this.setupEventListeners();
@@ -46,8 +46,7 @@ class OrderManager {
             await this.loadOrders();
             console.log('App initialized successfully');
         } catch (error) {
-            console.error('App initialization error:', error);
-            throw error;
+            console.error('Failed to initialize app:', error);
         }
     }
 
@@ -407,13 +406,5 @@ class OrderManager {
 }
 
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, initializing app...');
-    try {
-        new OrderManager();
-    } catch (error) {
-        console.error('Initialization error:', error);
-        alert('Failed to initialize the application. Check console for details.');
-    }
-});
+// Wait for DOM and Google APIs to load
+window.addEventListener('load', () => new OrderManager());
