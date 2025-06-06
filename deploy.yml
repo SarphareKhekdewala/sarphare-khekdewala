@@ -12,18 +12,22 @@ jobs:
 
       - name: Replace secrets in files
         run: |
+          echo "Checking secrets presence..."
+          [[ -z "${{ secrets.GOOGLE_CLIENT_ID }}" ]] && echo "❌ GOOGLE_CLIENT_ID is missing" && exit 1
+          [[ -z "${{ secrets.GOOGLE_API_KEY }}" ]] && echo "❌ GOOGLE_API_KEY is missing" && exit 1
+          [[ -z "${{ secrets.GOOGLE_SHEET_ID }}" ]] && echo "❌ GOOGLE_SHEET_ID is missing" && exit 1
+          
           echo "Replacing configuration values..."
-          sed -i "s|#{GOOGLE_CLIENT_ID}#|${{ secrets.GOOGLE_CLIENT_ID }}|g" index.html
-          sed -i "s|#{GOOGLE_API_KEY}#|${{ secrets.GOOGLE_API_KEY }}|g" index.html
-          sed -i "s|#{GOOGLE_SHEET_ID}#|${{ secrets.GOOGLE_SHEET_ID }}|g" index.html
-
-      - name: Verify replacements
-        run: |
-          echo "Checking configuration..."
-          if grep -q "#{GOOGLE_" index.html; then
-            echo "Error: Unreplaced placeholders found"
+          sed -i -E "s/['|\"]#\{GOOGLE_CLIENT_ID\}#['|\"]/\"${{ secrets.GOOGLE_CLIENT_ID }}\"/g" index.html
+          sed -i -E "s/['|\"]#\{GOOGLE_API_KEY\}#['|\"]/\"${{ secrets.GOOGLE_API_KEY }}\"/g" index.html
+          sed -i -E "s/['|\"]#\{GOOGLE_SHEET_ID\}#['|\"]/\"${{ secrets.GOOGLE_SHEET_ID }}\"/g" index.html
+          
+          echo "Verifying replacements..."
+          if grep -q "#\{GOOGLE_" index.html; then
+            echo "❌ Found unreplaced placeholders"
             exit 1
           fi
+          echo "✅ All placeholders replaced successfully"
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@4.1.5
