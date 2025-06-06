@@ -15,7 +15,7 @@ A web-based order management system for fresh crab business.
 - HTML5
 - CSS3
 - JavaScript
-- Google Sheets API (for data storage)
+- Google Sheets API (for data storage) 
 
 ## Visit Website
 
