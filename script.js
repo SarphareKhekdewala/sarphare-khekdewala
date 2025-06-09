@@ -1,8 +1,8 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAIJjgGz1HkadgC4fLv_BSd-9Xsaoq_K_JBHrMMian7UvJV_rkT4jT9gXH3Cu6T-Qb/exec';
 
-document.addEventListener('DOMContentLoaded', async () => {
+document.addEventListener('DOMContentLoaded', () => {
   const manager = new OrderManager();
-  await manager.loadOrders();
+  manager.loadOrders();
 
   document.getElementById('orderForm').addEventListener('submit', async e => {
     e.preventDefault();
@@ -15,26 +15,45 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('deliveryDay').textContent = day;
   });
 
+  document.getElementById('crabType').addEventListener('change', e => {
+    const prices = {
+      small: 650,
+      medium: 750,
+      big5: 800,
+      big4: 850,
+      big3: 900,
+      big2: 1000,
+      'green-small': 100,
+      'green-medium': 2000,
+      'green-large': 2800
+    };
+    const value = e.target.value;
+    if (prices[value] !== undefined) {
+      document.getElementById('price').value = prices[value];
+    }
+  });
+
   document.getElementById('downloadReport').addEventListener('click', () => manager.downloadCSV());
 
-  const updateDateTime = () => {
-    const now = new Date();
-    document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-IN');
-    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-IN', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
     });
-  };
-  setInterval(updateDateTime, 1000);
-  updateDateTime();
+  });
 });
 
 class OrderManager {
   constructor() {
-    this.ordersTable = document.querySelector('#ordersTable tbody');
+    this.ordersContainer = document.getElementById('ordersContainer');
     this.totalOrdersEl = document.getElementById('totalOrders');
     this.totalAmountEl = document.getElementById('totalAmount');
-    this.totalQtyEl = document.getElementById('totalQty');
-    this.totalSumEl = document.getElementById('totalSum');
+  }
+
+  formatDate(date) {
+    return date.toISOString().split('T')[0] + ' ' + date.toTimeString().split(' ')[0];
   }
 
   async loadOrders() {
@@ -42,69 +61,66 @@ class OrderManager {
       const res = await fetch(APPS_SCRIPT_URL);
       const rows = await res.json();
 
-      this.ordersTable.innerHTML = '';
-      let totAmt = 0, totQty = 0;
+      this.ordersContainer.innerHTML = '';
+      let totalOrders = 0;
+      let totalAmount = 0;
 
       rows.slice(1).forEach((r, i) => {
         const qty = parseFloat(r[5] || 0);
         const price = parseFloat(r[6] || 0);
         const total = qty * price;
-        totQty += qty;
-        totAmt += total;
+        totalAmount += total;
+        totalOrders++;
 
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${i + 1}</td>
-          <td>${r[0]}</td>
-          <td>${r[1]}</td>
-          <td>${r[2]}</td>
-          <td>${r[3]}</td>
-          <td>${r[4]}</td>
-          <td>${qty.toFixed(1)} kg</td>
-          <td>₹${price.toFixed(2)}</td>
-          <td>₹${total.toFixed(2)}</td>
-          <td>${r[8] || '-'}</td>
+        const tile = document.createElement('div');
+        tile.className = 'order-tile';
+        tile.innerHTML = `
+          <h4>Order #${i + 1}</h4>
+          <p><strong>Time:</strong> ${r[0]}</p>
+          <p><strong>Name:</strong> ${r[1]}</p>
+          <p><strong>Phone:</strong> ${r[2]}</p>
+          <p><strong>Address:</strong> ${r[3]}</p>
+          <p><strong>Crab Type:</strong> ${r[4]}</p>
+          <p><strong>Description:</strong> ${r[5]}</p>
+          <p><strong>Quantity:</strong> ${r[6]} kg</p>
+          <p><strong>Price/kg:</strong> ₹${r[7]}</p>
+          <p><strong>Total:</strong> ₹${r[8]}</p>
+          <p><strong>Delivery Date:</strong> ${r[9]}</p>
+          <label><input type="checkbox"> Delivered</label>
         `;
-        this.ordersTable.appendChild(tr);
+        this.ordersContainer.appendChild(tile);
       });
 
-      this.totalOrdersEl.textContent = Math.max(rows.length - 1, 0);
-      this.totalAmountEl.textContent = totAmt.toFixed(2);
-      this.totalQtyEl.textContent = `${totQty.toFixed(1)} kg`;
-      this.totalSumEl.textContent = `₹${totAmt.toFixed(2)}`;
+      this.totalOrdersEl.textContent = totalOrders;
+      this.totalAmountEl.textContent = totalAmount.toFixed(2);
     } catch (err) {
-      console.error('Failed to load orders:', err);
+      console.error('Error loading orders', err);
     }
   }
 
   async addOrder() {
-    const now = new Date().toISOString();
+    const now = this.formatDate(new Date());
     const name = document.getElementById('customerName').value;
     const phone = document.getElementById('customerPhone').value;
     const addr = document.getElementById('customerAddress').value;
-    const crabType = document.getElementById('crabType');
-    const typeValue = crabType.value;
-    const typeLabel = crabType.options[crabType.selectedIndex].text;
+    const type = document.getElementById('crabType').value;
+    const desc = document.getElementById('description').value;
     const qty = parseFloat(document.getElementById('quantity').value).toFixed(1);
     const price = parseFloat(document.getElementById('price').value).toFixed(2);
+    const total = (qty * price).toFixed(2);
     const delDate = document.getElementById('deliveryDate').value;
     const day = new Date(delDate).toLocaleDateString('en-IN', { weekday: 'long' });
-    const delDisplay = `${delDate} (${day})`;
 
     const payload = {
       action: 'append',
-      row: JSON.stringify([now, name, phone, addr, typeValue, qty, price, (qty * price), delDisplay, typeLabel])
+      row: JSON.stringify([now, name, phone, addr, type, desc, qty, price, total, `${delDate} (${day})`])
     };
 
     try {
-      const formData = new URLSearchParams(payload).toString();
-
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: formData
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(payload).toString()
       });
 
       const result = await res.json();
@@ -113,24 +129,23 @@ class OrderManager {
         document.getElementById('deliveryDay').textContent = '';
         await this.loadOrders();
       } else {
-        alert('Error saving order.');
-        console.error(result.error);
+        alert('Error adding order.');
       }
     } catch (err) {
-      console.error('Failed to add order:', err);
+      console.error('Add order failed:', err);
     }
   }
 
   downloadCSV() {
-    const rows = [["Order #","Time","Customer","Contact","Address","Crab Type","Quantity","Price/kg","Total","Display Type"]];
-    document.querySelectorAll('#ordersTable tbody tr').forEach(tr => {
-      rows.push(Array.from(tr.cells).slice(0, 10).map(td => td.textContent));
+    const rows = [['Order #', 'Time', 'Customer', 'Phone', 'Address', 'Crab Type', 'Description', 'Qty', 'Price/kg', 'Total', 'Delivery']];
+    document.querySelectorAll('.order-tile').forEach((tile, i) => {
+      const cols = Array.from(tile.querySelectorAll('p')).map(p => p.textContent.split(': ')[1]);
+      rows.push([`${i + 1}`, ...cols]);
     });
-
     const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `orders_report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = 'orders.csv';
     a.click();
   }
 }
