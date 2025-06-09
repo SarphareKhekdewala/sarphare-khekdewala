@@ -66,8 +66,8 @@ class OrderManager {
       let totalAmount = 0;
 
       rows.slice(1).forEach((r, i) => {
-        const qty = parseFloat(r[5] || 0);
-        const price = parseFloat(r[6] || 0);
+        const qty = parseFloat(r[6] || 0);
+        const price = parseFloat(r[7] || 0);
         const total = qty * price;
         totalAmount += total;
         totalOrders++;
@@ -113,7 +113,7 @@ class OrderManager {
 
     const payload = {
       action: 'append',
-      row: JSON.stringify([now, name, phone, addr, type, desc, qty, price, total, `${delDate} (${day})`])
+      row: JSON.stringify([now, name, phone, addr, type, desc, qty, price, total, `${delDate} (${day})`, ""])
     };
 
     try {
@@ -148,16 +148,5 @@ class OrderManager {
     a.download = 'orders.csv';
     a.click();
   }
-  function showTab(tabId) {
-    document.querySelectorAll('.tab-content').forEach(tab => {
-        tab.classList.remove('active');
-    });
-    document.getElementById(tabId).classList.add('active');
-
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    event.target.classList.add('active');
 }
 
-}
