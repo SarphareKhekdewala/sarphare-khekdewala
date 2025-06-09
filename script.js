@@ -1,4 +1,5 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAIJjgGz1HkadgC4fLv_BSd-9Xsaoq_K_JBHrMMian7UvJV_rkT4jT9gXH3Cu6T-Qb/exec';
+
 document.addEventListener('DOMContentLoaded', () => {
   const manager = new OrderManager();
   manager.loadOrders();
@@ -32,8 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  document.getElementById('downloadReport').addEventListener('click', () => manager.downloadCSV());
-
   document.querySelectorAll('.tab-button').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -43,75 +42,84 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  document.getElementById('applyFilters').addEventListener('click', () => manager.applyFilters());
+  document.getElementById('filterDate').addEventListener('change', () => manager.loadOrders());
+  document.getElementById('filterType').addEventListener('change', () => manager.loadOrders());
   document.getElementById('clearFilters').addEventListener('click', () => {
     document.getElementById('filterDate').value = '';
     document.getElementById('filterType').value = '';
     manager.loadOrders();
   });
+
+  document.getElementById('downloadReport').addEventListener('click', () => manager.downloadCSV());
 });
 
 class OrderManager {
   constructor() {
     this.ordersContainer = document.getElementById('ordersContainer');
     this.totalOrdersEl = document.getElementById('totalOrders');
+    this.totalKgEl = document.getElementById('totalKg');
     this.totalAmountEl = document.getElementById('totalAmount');
-    this.totalQuantityEl = document.getElementById('totalQuantity');
-    this.allOrders = [];
   }
 
   formatDate(date) {
-    const pad = n => (n < 10 ? '0' + n : n);
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    const pad = n => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
 
   async loadOrders() {
     try {
       const res = await fetch(APPS_SCRIPT_URL);
       const rows = await res.json();
-      this.allOrders = rows.slice(1);
-      this.renderOrders(this.allOrders);
+
+      const filterDate = document.getElementById('filterDate').value;
+      const filterType = document.getElementById('filterType').value;
+
+      this.ordersContainer.innerHTML = '';
+      let totalOrders = 0;
+      let totalAmount = 0;
+      let totalKg = 0;
+
+      rows.slice(1).forEach((r, i) => {
+        const [timestamp, name, phone, address, type, desc, qtyRaw, priceRaw, totalRaw, delivery] = r;
+
+        const qty = parseFloat(qtyRaw || 0);
+        const price = parseFloat(priceRaw || 0);
+        const total = parseFloat(totalRaw || 0);
+
+        const deliveryDateOnly = delivery.split(' ')[0];
+        const matchesDate = !filterDate || deliveryDateOnly === filterDate;
+        const matchesType = !filterType || type === filterType;
+
+        if (!matchesDate || !matchesType) return;
+
+        totalOrders++;
+        totalAmount += total;
+        totalKg += qty;
+
+        const tile = document.createElement('div');
+        tile.className = 'order-tile';
+        tile.innerHTML = `
+          <h4>Order #${totalOrders}</h4>
+          <p><strong>Order Date:</strong> ${timestamp}</p>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Phone:</strong> ${phone}</p>
+          <p><strong>Address:</strong> ${address}</p>
+          <p><strong>Crab Type:</strong> ${type}</p>
+          <p><strong>Description:</strong> ${desc}</p>
+          <p><strong>Quantity:</strong> ${qty} kg</p>
+          <p><strong>Price/kg:</strong> ₹${price}</p>
+          <p><strong>Total:</strong> ₹${total}</p>
+          <p><strong>Delivery Date:</strong> ${delivery}</p>
+        `;
+        this.ordersContainer.appendChild(tile);
+      });
+
+      this.totalOrdersEl.textContent = totalOrders;
+      this.totalAmountEl.textContent = totalAmount.toFixed(2);
+      this.totalKgEl.textContent = totalKg.toFixed(1);
     } catch (err) {
       console.error('Error loading orders', err);
     }
-  }
-
-  renderOrders(orders) {
-    this.ordersContainer.innerHTML = '';
-    let totalOrders = 0;
-    let totalAmount = 0;
-    let totalQty = 0;
-
-    orders.forEach((r, i) => {
-      const qty = parseFloat(r[6] || 0);
-      const price = parseFloat(r[7] || 0);
-      const total = qty * price;
-      totalAmount += total;
-      totalQty += qty;
-      totalOrders++;
-
-      const tile = document.createElement('div');
-      tile.className = 'order-tile';
-      tile.innerHTML = `
-        <h4>Order #${i + 1}</h4>
-        <p><strong>Time:</strong> ${r[0]}</p>
-        <p><strong>Name:</strong> ${r[1]}</p>
-        <p><strong>Phone:</strong> ${r[2]}</p>
-        <p><strong>Address:</strong> ${r[3]}</p>
-        <p><strong>Crab Type:</strong> ${r[4]}</p>
-        <p><strong>Description:</strong> ${r[5]}</p>
-        <p><strong>Quantity:</strong> ${qty} kg</p>
-        <p><strong>Price/kg:</strong> ₹${price}</p>
-        <p><strong>Total:</strong> ₹${total.toFixed(2)}</p>
-        <p><strong>Delivery Date:</strong> ${r[9]}</p>
-        <label><input type="checkbox"> Delivered</label>
-      `;
-      this.ordersContainer.appendChild(tile);
-    });
-
-    this.totalOrdersEl.textContent = totalOrders;
-    this.totalAmountEl.textContent = totalAmount.toFixed(2);
-    this.totalQuantityEl.textContent = totalQty.toFixed(1);
   }
 
   async addOrder() {
@@ -152,21 +160,8 @@ class OrderManager {
     }
   }
 
-  applyFilters() {
-    const dateVal = document.getElementById('filterDate').value;
-    const typeVal = document.getElementById('filterType').value;
-
-    const filtered = this.allOrders.filter(row => {
-      const matchesDate = dateVal ? row[9]?.startsWith(dateVal) : true;
-      const matchesType = typeVal ? row[4] === typeVal : true;
-      return matchesDate && matchesType;
-    });
-
-    this.renderOrders(filtered);
-  }
-
   downloadCSV() {
-    const rows = [['Order #', 'Time', 'Customer', 'Phone', 'Address', 'Crab Type', 'Description', 'Qty', 'Price/kg', 'Total', 'Delivery']];
+    const rows = [['Order #', 'Order Date', 'Customer', 'Phone', 'Address', 'Crab Type', 'Description', 'Qty', 'Price/kg', 'Total', 'Delivery']];
     document.querySelectorAll('.order-tile').forEach((tile, i) => {
       const cols = Array.from(tile.querySelectorAll('p')).map(p => p.textContent.split(': ')[1]);
       rows.push([`${i + 1}`, ...cols]);
