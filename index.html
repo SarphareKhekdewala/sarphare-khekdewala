@@ -22,30 +22,30 @@
 
     <div id="formTab" class="tab-content active">
       <form id="orderForm" class="order-form">
-        <div class="form-group"><label for="customerName">Customer Name:</label><input type="text" id="customerName" required></div>
-        <div class="form-group"><label for="customerPhone">Contact Number:</label><input type="tel" id="customerPhone" pattern="[0-9]{10}" required></div>
-        <div class="form-group"><label for="customerAddress">Address:</label><textarea id="customerAddress" required></textarea></div>
+        <div class="form-group"><label>Customer Name:</label><input type="text" id="customerName" required /></div>
+        <div class="form-group"><label>Contact Number:</label><input type="tel" id="customerPhone" pattern="[0-9]{10}" required /></div>
+        <div class="form-group"><label>Address:</label><textarea id="customerAddress" required></textarea></div>
         <div class="form-group">
-          <label for="crabType">Crab Type:</label>
+          <label>Crab Type:</label>
           <select id="crabType" required>
             <option value="">Select Crab Type</option>
-            <option value="small">Small (9–10 crabs)</option>
-            <option value="medium">Medium (6–7 crabs)</option>
+            <option value="small">Small (9-10 crabs)</option>
+            <option value="medium">Medium (6-7 crabs)</option>
             <option value="big5">Big (5 crabs)</option>
             <option value="big4">Big (4 crabs)</option>
             <option value="big3">Big (3 crabs)</option>
             <option value="big2">Big (2 crabs)</option>
-            <option value="green-small">Green Crabs (500–700g)</option>
-            <option value="green-medium">Green Crabs (700–1000g)</option>
-            <option value="green-large">Green Crabs (800g–1.5kg)</option>
+            <option value="green-small">Green (500-700g)</option>
+            <option value="green-medium">Green (500-700g)</option>
+            <option value="green-large">Green (800g-1.5kg)</option>
           </select>
         </div>
-        <div class="form-group"><label for="description">Description:</label><input type="text" id="description"></div>
-        <div class="form-group"><label for="quantity">Quantity (kg):</label><input type="number" id="quantity" min="0.5" step="0.5" required></div>
-        <div class="form-group"><label for="price">Price per kg:</label><input type="number" id="price" min="0" required></div>
+        <div class="form-group"><label>Description:</label><input type="text" id="description" /></div>
+        <div class="form-group"><label>Quantity (kg):</label><input type="number" id="quantity" min="0.5" step="0.5" required /></div>
+        <div class="form-group"><label>Price per kg:</label><input type="number" id="price" min="0" required /></div>
         <div class="form-group">
-          <label for="deliveryDate">Delivery Date:</label>
-          <input type="date" id="deliveryDate" required>
+          <label>Delivery Date:</label>
+          <input type="date" id="deliveryDate" required />
           <span id="deliveryDay"></span>
         </div>
         <div class="form-actions">
@@ -57,35 +57,31 @@
 
     <div id="ordersTab" class="tab-content">
       <div class="filters">
-        <label>Filter by Date: <input type="date" id="filterDate"></label>
+        <label>Filter by Date: <input type="date" id="filterDate" /></label>
         <label>Filter by Crab Type:
-          <select id="filterType">
-            <option value="">All Types</option>
+          <select id="filterCrabType">
+            <option value="">All</option>
             <option value="small">Small</option>
             <option value="medium">Medium</option>
-            <option value="big5">Big (5)</option>
-            <option value="big4">Big (4)</option>
-            <option value="big3">Big (3)</option>
-            <option value="big2">Big (2)</option>
+            <option value="big5">Big5</option>
+            <option value="big4">Big4</option>
+            <option value="big3">Big3</option>
+            <option value="big2">Big2</option>
             <option value="green-small">Green Small</option>
             <option value="green-medium">Green Medium</option>
             <option value="green-large">Green Large</option>
           </select>
         </label>
-        <button class="btn" id="clearFilters">❌ Clear Filters</button>
       </div>
-
       <div class="orders-summary">
         <h3>Daily Summary</h3>
         <p>Total Orders: <span id="totalOrders">0</span></p>
-        <p>Total Quantity: <span id="totalKg">0.0</span> kg</p>
+        <p>Total Quantity: <span id="totalQty">0</span> kg</p>
         <p>Total Amount: ₹<span id="totalAmount">0.00</span></p>
       </div>
-
       <div id="ordersContainer" class="orders-container"></div>
       <button id="downloadReport" class="btn download-btn">📥 Download Report</button>
     </div>
-    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
   </div>
 </body>
 </html>
