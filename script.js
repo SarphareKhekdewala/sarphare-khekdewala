@@ -17,10 +17,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('crabType').addEventListener('change', e => {
     const prices = {
-      small: 650, medium: 750, big5: 800, big4: 850,
-      big3: 900, big2: 1000, green-small: 1000,
-      green-medium: 2000, green-large: 2800
-    };
+  small: 650, medium: 750, big5: 800, big4: 850,
+  big3: 900, big2: 1000, 'green-small': 1000,
+  'green-medium': 2000, 'green-large': 2800
+};
+
     document.getElementById('price').value = prices[e.target.value] || '';
   });
 
