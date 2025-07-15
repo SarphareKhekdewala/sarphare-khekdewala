@@ -17,13 +17,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('crabType').addEventListener('change', e => {
     const prices = {
-  small: 650, medium: 750, big5: 800, big4: 850,
-  big3: 900, big2: 1000, 'green-small': 1000,
-  'green-medium': 2000, 'green-large': 2800
-};
-
+      small: 650, medium: 750, big5: 800, big4: 850,
+      big3: 900, big2: 1000, 'green-small': 1000,
+      'green-medium': 2000, 'green-large': 2800
+    };
     document.getElementById('price').value = prices[e.target.value] || '';
+    updateTotalPrice();
   });
+
+  document.getElementById('quantity').addEventListener('input', updateTotalPrice);
+  document.getElementById('price').addEventListener('input', updateTotalPrice);
+
+  function updateTotalPrice() {
+    const qty = parseFloat(document.getElementById('quantity').value) || 0;
+    const price = parseFloat(document.getElementById('price').value) || 0;
+    document.getElementById('totalPrice').value = (qty * price).toFixed(2);
+  }
 
   document.getElementById('downloadReport').addEventListener('click', () => manager.downloadCSV());
 
@@ -47,6 +56,19 @@ class OrderManager {
     this.totalOrdersEl = document.getElementById('totalOrders');
     this.totalAmountEl = document.getElementById('totalAmount');
     this.totalQtyEl = document.getElementById('totalQty');
+    this.editingIndex = null;
+
+    // Event delegation for edit/delete
+    this.ordersContainer.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('edit-btn')) {
+        const idx = e.target.dataset.index;
+        this.editOrder(idx);
+      }
+      if (e.target.classList.contains('delete-btn')) {
+        const idx = e.target.dataset.index;
+        await this.deleteOrder(idx);
+      }
+    });
   }
 
   formatDate(date) {
@@ -100,6 +122,8 @@ class OrderManager {
         <p><strong>Price/kg:</strong> ₹${price}</p>
         <p><strong>Total:</strong> ₹${total}</p>
         <p><strong>Delivery:</strong> ${r[9]}</p>
+        <button class="btn edit-btn" data-index="${i}">✏️ Edit</button>
+        <button class="btn delete-btn" data-index="${i}">🗑️ Delete</button>
       `;
       this.ordersContainer.appendChild(tile);
     });
@@ -107,6 +131,23 @@ class OrderManager {
     this.totalOrdersEl.textContent = totalOrders;
     this.totalQtyEl.textContent = totalQty.toFixed(1);
     this.totalAmountEl.textContent = totalAmount.toFixed(2);
+  }
+
+  editOrder(idx) {
+    const r = this.orders[idx];
+    document.getElementById('customerName').value = r[1];
+    document.getElementById('customerPhone').value = r[2];
+    document.getElementById('customerAddress').value = r[3];
+    document.getElementById('crabType').value = r[4];
+    document.getElementById('description').value = r[5];
+    document.getElementById('quantity').value = r[6];
+    document.getElementById('price').value = r[7];
+    document.getElementById('deliveryDate').value = r[9].split(' ')[0];
+    document.getElementById('deliveryDay').textContent = r[9].split('(')[1]?.replace(')', '') || '';
+    document.getElementById('totalPrice').value = r[8];
+    this.editingIndex = idx;
+    document.querySelector('.submit-btn').textContent = '✏️ Update Order';
+    document.querySelector('.tab-button[data-tab="formTab"]').click();
   }
 
   async addOrder() {
@@ -123,7 +164,8 @@ class OrderManager {
     const day = new Date(delDate).toLocaleDateString('en-IN', { weekday: 'long' });
 
     const payload = {
-      action: 'append',
+      action: this.editingIndex != null ? 'update' : 'append',
+      index: this.editingIndex,
       row: JSON.stringify([now.split(' ')[0], name, phone, addr, type, desc, qty, price, total, `${delDate} (${day})`])
     };
 
@@ -138,12 +180,32 @@ class OrderManager {
       if (result.success) {
         document.getElementById('orderForm').reset();
         document.getElementById('deliveryDay').textContent = '';
+        document.getElementById('totalPrice').value = '';
+        this.editingIndex = null;
+        document.querySelector('.submit-btn').textContent = '➕ Add Order';
         await this.loadOrders();
       } else {
-        alert('Error adding order.');
+        alert('Error adding/updating order.');
       }
     } catch (err) {
-      console.error('Add order failed:', err);
+      console.error('Add/Update order failed:', err);
+    }
+  }
+
+  async deleteOrder(idx) {
+    if (!confirm('Delete this order?')) return;
+    const payload = { action: 'delete', index: idx };
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams(payload).toString()
+      });
+      const result = await res.json();
+      if (result.success) await this.loadOrders();
+      else alert('Error deleting order.');
+    } catch (err) {
+      console.error('Delete order failed:', err);
     }
   }
 
@@ -160,4 +222,3 @@ class OrderManager {
     a.click();
   }
 }
-
