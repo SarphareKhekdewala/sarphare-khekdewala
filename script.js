@@ -1,4 +1,5 @@
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzAIJjgGz1HkadgC4fLv_BSd-9Xsaoq_K_JBHrMMian7UvJV_rkT4jT9gXH3Cu6T-Qb/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysjYAyqWlV8PNv5JSbwOPk6zaH5ooSMo3slK2OacFdo-0nab84xY6I2s14DCpA_ulz/exec';
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const manager = new OrderManager();
