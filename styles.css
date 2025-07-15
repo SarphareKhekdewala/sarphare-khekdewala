@@ -97,6 +97,15 @@ input:focus, select:focus, textarea:focus {
   width: 100%;
   margin-top: 20px;
 }
+.edit-btn {
+  background: #f1c40f;
+  color: #333;
+  margin-right: 5px;
+}
+.delete-btn {
+  background: #e74c3c;
+  color: #fff;
+}
 
 .orders-summary {
   margin: 20px 0;
