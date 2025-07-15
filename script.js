@@ -1,5 +1,28 @@
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbysjYAyqWlV8PNv5JSbwOPk6zaH5ooSMo3slK2OacFdo-0nab84xY6I2s14DCpA_ulz/exec';
+function showLoading(show) {
+  let loader = document.getElementById('loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.id = 'loader';
+    loader.innerHTML = '<div class="spinner"></div>';
+    document.body.appendChild(loader);
+  }
+  loader.style.display = show ? 'flex' : 'none';
+}
 
+function showPopup(message) {
+  let popup = document.getElementById('popup');
+  if (!popup) {
+    popup = document.createElement('div');
+    popup.id = 'popup';
+    popup.className = 'popup';
+    popup.innerHTML = `<div class="popup-content"><span id="popupMsg"></span><button id="closePopup">OK</button></div>`;
+    document.body.appendChild(popup);
+    document.getElementById('closePopup').onclick = () => popup.style.display = 'none';
+  }
+  document.getElementById('popupMsg').textContent = message;
+  popup.style.display = 'flex';
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const manager = new OrderManager();
@@ -48,6 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('filterDate').addEventListener('input', () => manager.applyFilters());
   document.getElementById('filterCrabType').addEventListener('change', () => manager.applyFilters());
+
+  document.getElementById('closePopup').onclick = () => {
+    document.getElementById('popup').style.display = 'none';
+  };
 });
 
 class OrderManager {
@@ -78,6 +105,7 @@ class OrderManager {
   }
 
   async loadOrders() {
+    showLoading(true);
     try {
       const res = await fetch(APPS_SCRIPT_URL);
       const rows = await res.json();
@@ -85,6 +113,8 @@ class OrderManager {
       this.applyFilters();
     } catch (err) {
       console.error('Error loading orders', err);
+    } finally {
+      showLoading(false);
     }
   }
 
@@ -152,6 +182,10 @@ class OrderManager {
   }
 
   async addOrder() {
+    const submitBtn = document.querySelector('.submit-btn');
+    submitBtn.disabled = true;
+    showLoading(true);
+
     const now = this.formatDate(new Date());
     const name = document.getElementById('customerName').value;
     const phone = document.getElementById('customerPhone').value;
@@ -185,16 +219,21 @@ class OrderManager {
         this.editingIndex = null;
         document.querySelector('.submit-btn').textContent = '➕ Add Order';
         await this.loadOrders();
+        showPopup('Order added successfully!');
       } else {
         alert('Error adding/updating order.');
       }
     } catch (err) {
       console.error('Add/Update order failed:', err);
+    } finally {
+      showLoading(false);
+      submitBtn.disabled = false;
     }
   }
 
   async deleteOrder(idx) {
     if (!confirm('Delete this order?')) return;
+    showLoading(true);
     const payload = { action: 'delete', index: idx };
     try {
       const res = await fetch(APPS_SCRIPT_URL, {
@@ -207,6 +246,8 @@ class OrderManager {
       else alert('Error deleting order.');
     } catch (err) {
       console.error('Delete order failed:', err);
+    } finally {
+      showLoading(false);
     }
   }
 
