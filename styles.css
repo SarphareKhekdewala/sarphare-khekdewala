@@ -166,3 +166,49 @@ input:focus, select:focus, textarea:focus {
   font-size: 1rem;
   border-radius: 6px;
 }
+
+/* Loader styles */
+#loader {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255,255,255,0.7);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.spinner {
+  border: 6px solid #f3f3f3;
+  border-top: 6px solid #3498db;
+  border-radius: 50%;
+  width: 40px; height: 40px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Popup styles */
+.popup {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.popup-content {
+  background: #fff;
+  padding: 30px 20px;
+  border-radius: 10px;
+  text-align: center;
+  min-width: 250px;
+}
+.popup-content button {
+  margin-top: 15px;
+  padding: 8px 18px;
+  background: #3498db;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
